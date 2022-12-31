@@ -1,7 +1,16 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\app",
+    "\\app\\src",
+    "\\app\\src\\androidTest",
+    "\\app\\src\\androidTest\\java",
+    "\\app\\src\\androidTest\\java\\com",
+    "\\app\\src\\androidTest\\java\\com\\simcoder",
+    "\\app\\src\\androidTest\\java\\com\\simcoder\\uber",
+    "\\gradle",
+    "\\gradle\\wrapper"
   ],
-  "SelectedNode": "\\C:\\Users\\asus\\Source\\Repos\\UberClone",
+  "SelectedNode": "\\README.md",
   "PreviewInSolutionExplorer": false
 }
