@@ -3,14 +3,14 @@
     "",
     "\\app",
     "\\app\\src",
-    "\\app\\src\\androidTest",
-    "\\app\\src\\androidTest\\java",
-    "\\app\\src\\androidTest\\java\\com",
-    "\\app\\src\\androidTest\\java\\com\\simcoder",
-    "\\app\\src\\androidTest\\java\\com\\simcoder\\uber",
+    "\\app\\src\\main",
+    "\\app\\src\\main\\java",
+    "\\app\\src\\main\\java\\com",
+    "\\app\\src\\main\\java\\com\\simcoder",
+    "\\app\\src\\main\\java\\com\\simcoder\\uber",
     "\\gradle",
     "\\gradle\\wrapper"
   ],
-  "SelectedNode": "\\README.md",
+  "SelectedNode": "\\app\\src\\main\\java\\com\\simcoder\\uber\\DriverMapActivity.java",
   "PreviewInSolutionExplorer": false
 }
