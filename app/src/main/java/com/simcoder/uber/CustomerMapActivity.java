@@ -76,6 +76,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     private ImageView mDriverProfileImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
+    private String destination;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,8 +125,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
 
                     if (driverFoundID != null){
-                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRideId");
-                        driverRef.removeValue();
+                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+                        driverRef.setValue(true);
                         driverFoundID = null;
 
                     }
@@ -164,6 +166,20 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 return;
             }
         });
+                PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                // TODO: Get info about the selected place.
+                destination = place.getName().toString();
+            }
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+            }
+        });
     }
 
     private int radius = 1;
@@ -183,10 +199,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 if (!driverFound && requestBol){
                     driverFound = true;
                     driverFoundID = key;
-                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+                  
+         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");                   
                     String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     HashMap map = new HashMap();
                     map.put("customerRideId", customerId);
+                    map.put("destination", destination);
                     driverRef.updateChildren(map);
                     getDriverLocation();
                     mRequest.setText("Looking for Driver Location....");
@@ -211,6 +229,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             }
         });
     }
+
     private Marker mDriverMarker;
     private DatabaseReference driverLocationRef;
     private ValueEventListener driverLocationRefListener;
@@ -218,7 +237,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
         driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
         driverLocationRefListener = driverLocationRef.addValueEventListener(new ValueEventListener() {
-            @Override
+          
+        @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists() && requestBol){
                     List<Object> map = (List<Object>) dataSnapshot.getValue();
@@ -301,9 +321,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         });
     }
 
-
-
-    @Override
+   @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
@@ -331,6 +349,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
         }
     }
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         mLocationRequest = new LocationRequest();
