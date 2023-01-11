@@ -70,13 +70,14 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     private Marker pickupMarker;
 
-    private LinearLayout mInfoLayout;
+    private String destination;
+
+    private LinearLayout mDriverInfo;
 
     private SupportMapFragment mapFragment;
 
     private ImageView mDriverProfileImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
-    private String destination;
 
 
     @Override
@@ -93,7 +94,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             mapFragment.getMapAsync(this);
         }
 
-        mInfoLayout = (LinearLayout) findViewById(R.id.driverInfo);
+        mDriverInfo = (LinearLayout) findViewById(R.id.driverInfo);
 
         mDriverProfileImage = (ImageView) findViewById(R.id.driverProfileImage);
         mDriverName = (TextView) findViewById(R.id.driverName);
@@ -115,18 +116,18 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             }
         });
         mRequest.setOnClickListener(new View.OnClickListener() {
-            @Override
+         
+        @Override
             public void onClick(View v) {
                 if (requestBol){
                     requestBol = false;
                     geoQuery.removeAllListeners();
                     driverLocationRef.removeEventListener(driverLocationRefListener);
-                    driverInfoDatabase.removeEventListener(driverInfoDatabaseListener);
 
 
                     if (driverFoundID != null){
-                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-                        driverRef.setValue(true);
+                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                        driverRef.removeValue();
                         driverFoundID = null;
 
                     }
@@ -143,7 +144,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                         mDriverMarker.remove();
                     }
                     mRequest.setText("call Uber");
-                    mInfoLayout.setVisibility(View.GONE);
+
+                    mDriverInfo.setVisibility(View.GONE);
+                    mDriverName.setText("");
+                    mDriverPhone.setText("");
+                    mDriverCar.setText("Destination: --");
+                    mDriverProfileImage.setImageResource(R.mipmap.ic_default_user);
 
                 }else{
                     requestBol = true;
@@ -206,7 +212,9 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     map.put("customerRideId", customerId);
                     map.put("destination", destination);
                     driverRef.updateChildren(map);
+                 
                     getDriverLocation();
+                    getDriverInfo();
                     mRequest.setText("Looking for Driver Location....");
                 }
             }
@@ -260,6 +268,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     Location loc2 = new Location("");
                     loc2.setLatitude(driverLatLng.latitude);
                     loc2.setLongitude(driverLatLng.longitude);
+                 
                     float distance = loc1.distanceTo(loc2);
                     if (distance<100){
                         mRequest.setText("Driver's Here");
@@ -270,11 +279,11 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
                     mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("your driver").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_car)));
                     mInfoLayout.setVisibility(View.VISIBLE);
-
                     getDriverInfo();
                 }
 
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
             }
@@ -282,35 +291,26 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     }
 
-    private DatabaseReference driverInfoDatabase;
-    private ValueEventListener driverInfoDatabaseListener;
     private void getDriverInfo(){
-        driverInfoDatabase= FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-        driverInfoDatabase.keepSynced(true);
-        driverInfoDatabaseListener = driverInfoDatabase.addValueEventListener(new ValueEventListener() {
-            @Override
+          mDriverInfo.setVisibility(View.VISIBLE);
+        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+        mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+       
+        @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
+                if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0){
                     Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    String name = "";
-                    String phone = "";
-                    String car = "";
-                    String profileImageURL = "default";
-                    if (map.get("name") != null) {
-                        name = map.get("name").toString();
-                        mDriverName.setText(name);
+               if(map.get("name")!=null){
+                        mDriverName.setText(map.get("name").toString());
                     }
-                    if (map.get("phone") != null) {
-                        phone = map.get("phone").toString();
-                        mDriverPhone.setText(phone);
+                        if(map.get("phone")!=null){
+                        mDriverPhone.setText(map.get("phone").toString());
                     }
-                    if (map.get("car") != null) {
-                        car = map.get("car").toString();
-                        mDriverCar.setText(car);
+                        if(map.get("car")!=null){
+                        mDriverCar.setText(map.get("car").toString());
                     }
-                    if (map.get("profileImageURL") != null) {
-                        profileImageURL = map.get("profileImageURL").toString();
-                        Glide.with(getApplication()).load(profileImageURL).into(mDriverProfileImage);
+                    if(map.get("profileImageUrl")!=null){
+                        Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProfileImage);
                     }
                 }
             }
