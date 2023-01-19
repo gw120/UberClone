@@ -8,9 +8,8 @@
     "\\app\\src\\main\\java\\com",
     "\\app\\src\\main\\java\\com\\simcoder",
     "\\app\\src\\main\\java\\com\\simcoder\\uber",
-    "\\app\\src\\main\\res",
-    "\\app\\src\\main\\res\\layout"
+    "\\app\\src\\main\\res"
   ],
-  "SelectedNode": "\\app\\src\\main\\java\\com\\simcoder\\uber\\DriverLoginActivity.java",
+  "SelectedNode": "\\app\\src\\main\\java\\com\\simcoder\\uber\\CustomerMapActivity.java",
   "PreviewInSolutionExplorer": false
 }
