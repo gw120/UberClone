@@ -6,10 +6,9 @@
     "\\app\\src\\main",
     "\\app\\src\\main\\java",
     "\\app\\src\\main\\java\\com",
-    "\\app\\src\\main\\java\\com\\simcoder",
-    "\\app\\src\\main\\java\\com\\simcoder\\uber",
-    "\\app\\src\\main\\res"
+    "\\app\\src\\main\\res",
+    "\\app\\src\\main\\res\\layout"
   ],
-  "SelectedNode": "\\app\\src\\main\\java\\com\\simcoder\\uber\\CustomerMapActivity.java",
+  "SelectedNode": "\\google-services.json",
   "PreviewInSolutionExplorer": false
 }
