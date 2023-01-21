@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
@@ -57,9 +58,12 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     LocationRequest mLocationRequest;
     private Button mLogout, mSettings, mRideStatus;
     private int status = 0;
+
     private String customerId = "", destination;
-    private LatLng destinationLatLng;
+    private LatLng destinationLatLng, pickupLatLng;
+
     private Boolean isLoggingOut = false;
+
     private SupportMapFragment mapFragment;
     private LinearLayout mCustomerInfo;
     private ImageView mCustomerProfileImage;
@@ -165,7 +169,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     if(map.get(1) != null){
                         locationLng = Double.parseDouble(map.get(1).toString());
                     }
-                    LatLng pickupLatLng = new LatLng(locationLat,locationLng);
+                    pickupLatLng = new LatLng(locationLat,locationLng);
                     pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("pickup location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
                     getRouteToMarker(pickupLatLng);
                 }
@@ -274,21 +278,18 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         map.put("customer", customerId);
         map.put("rating", 0);
         map.put("timestamp", getCurrentTimestamp());
+        map.put("destination", destination);
+        map.put("location/from/lat", pickupLatLng.latitude);
+        map.put("location/from/lng", pickupLatLng.longitude);
+        map.put("location/to/lat", destinationLatLng.latitude);
+        map.put("location/to/lng", destinationLatLng.longitude);
         historyRef.child(requestId).updateChildren(map);
-
-
     }
-
-
-
-
 
     private Long getCurrentTimestamp() {
         Long timestamp = System.currentTimeMillis()/1000;
         return timestamp;
     }
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -419,5 +420,4 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         }
         polylines.clear();
     }
-
 }
