@@ -2,9 +2,12 @@ package com.simcoder.uber;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.bumptech.glide.Glide;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
@@ -33,7 +36,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 public class HistorySingleActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private String rideId, currentUserId, customerId, driverId, userDriverOrCustomer;
     private TextView rideLocation;
@@ -43,9 +45,12 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     private TextView userPhone;
 
     private ImageView userImage;
-    private DatabaseReference historyRideInfoDb;
-    private LatLng destinationLatLng, pickupLatLng;
 
+    private RatingBar mRatingBar;
+
+    private DatabaseReference historyRideInfoDb;
+
+    private LatLng destinationLatLng, pickupLatLng;
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
     @Override
@@ -61,8 +66,13 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         rideDate = (TextView) findViewById(R.id.rideDate);
         userName = (TextView) findViewById(R.id.userName);
         userPhone = (TextView) findViewById(R.id.userPhone);
+
         userImage = (ImageView) findViewById(R.id.userImage);
+
+        mRatingBar = (RatingBar) findViewById(R.id.ratingBar);
+
         currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         historyRideInfoDb = FirebaseDatabase.getInstance().getReference().child("history").child(rideId);
         getRideInformation();
     }
@@ -84,10 +94,14 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                             if(!driverId.equals(currentUserId)){
                                 userDriverOrCustomer = "Customers";
                                 getUserInformation("Drivers", driverId);
+                                displayCustomerRelatedObjects();
                             }
                         }
                         if (child.getKey().equals("timestamp")){
                             rideDate.setText(getDate(Long.valueOf(child.getValue().toString())));
+                        }
+                        if (child.getKey().equals("rating")){
+                            mRatingBar.setRating(Integer.valueOf(child.getValue().toString()));
 
                         }
                         if (child.getKey().equals("destination")){
@@ -109,7 +123,18 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         });
     }
 
-  
+    private void displayCustomerRelatedObjects() {
+        mRatingBar.setVisibility(View.VISIBLE);
+        mRatingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                historyRideInfoDb.child("rating").setValue(rating);
+                DatabaseReference mDriverRatingDb = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("rating");
+                mDriverRatingDb.child(rideId).setValue(rating);
+            }
+        });
+    }
+
     private void getUserInformation(String otherUserDriverOrCustomer, String otherUserId) {
         DatabaseReference mOtherUserDB = FirebaseDatabase.getInstance().getReference().child("Users").child(otherUserDriverOrCustomer).child(otherUserId);
         mOtherUserDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -126,17 +151,13 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                     if(map.get("profileImageUrl") != null){
                         Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(userImage);
                     }
-                
-            }
-
+                }
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
             }
         });
     }
-
-
     private String getDate(Long time) {
         Calendar cal = Calendar.getInstance(Locale.getDefault());
         cal.setTimeInMillis(time*1000);
@@ -152,14 +173,10 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                 .build();
         routing.execute();
     }
-
-   
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap=googleMap;
     }
-
-
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     @Override
@@ -175,22 +192,16 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     }
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
-
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         builder.include(pickupLatLng);
         builder.include(destinationLatLng);
         LatLngBounds bounds = builder.build();
-
         int width = getResources().getDisplayMetrics().widthPixels;
         int padding = (int) (width*0.2);
-
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
         mMap.animateCamera(cameraUpdate);
-
         mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("pickup location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
         mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("destination"));
-
         if(polylines.size()>0) {
             for (Polyline poly : polylines) {
                 poly.remove();
@@ -219,5 +230,4 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         }
         polylines.clear();
     }
-
 }

@@ -1,7 +1,8 @@
 apply plugin: 'com.android.application'
+
 android {
     compileSdkVersion 25
-    buildToolsVersion "26.0.0"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.simcoder.uber"
         minSdkVersion 15
@@ -38,8 +39,4 @@ dependencies {
     compile 'com.github.jd-alexander:library:1.1.0'
     testCompile 'junit:junit:4.12'
 }
-
-
-
-
 apply plugin: 'com.google.gms.google-services'
