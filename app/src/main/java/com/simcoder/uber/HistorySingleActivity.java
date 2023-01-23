@@ -1,13 +1,17 @@
 package com.simcoder.uber;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.bumptech.glide.Glide;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
@@ -31,11 +35,18 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.paypal.android.sdk.payments.PayPalConfiguration;
+import com.paypal.android.sdk.payments.PayPalPayment;
+import com.paypal.android.sdk.payments.PayPalService;
+import com.paypal.android.sdk.payments.PaymentActivity;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 public class HistorySingleActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private String rideId, currentUserId, customerId, driverId, userDriverOrCustomer;
     private TextView rideLocation;
@@ -43,21 +54,31 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     private TextView rideDate;
     private TextView userName;
     private TextView userPhone;
-
     private ImageView userImage;
 
     private RatingBar mRatingBar;
 
+    private Button mPay;
+
     private DatabaseReference historyRideInfoDb;
 
     private LatLng destinationLatLng, pickupLatLng;
+    private String distance;
+    private Double ridePrice;
+
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history_single);
+
+        Intent intent = new Intent(this, PayPalService.class);
+        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+        startService(intent);
+
         polylines = new ArrayList<>();
+
         rideId = getIntent().getExtras().getString("rideId");
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
@@ -66,18 +87,21 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         rideDate = (TextView) findViewById(R.id.rideDate);
         userName = (TextView) findViewById(R.id.userName);
         userPhone = (TextView) findViewById(R.id.userPhone);
-
         userImage = (ImageView) findViewById(R.id.userImage);
 
         mRatingBar = (RatingBar) findViewById(R.id.ratingBar);
+
+        mPay = findViewById(R.id.pay);
 
         currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         historyRideInfoDb = FirebaseDatabase.getInstance().getReference().child("history").child(rideId);
         getRideInformation();
     }
+
     private void getRideInformation() {
         historyRideInfoDb.addListenerForSingleValueEvent(new ValueEventListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
@@ -104,6 +128,12 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                             mRatingBar.setRating(Integer.valueOf(child.getValue().toString()));
 
                         }
+                        if (child.getKey().equals("distance")){
+                            distance = child.getValue().toString();
+                            rideDistance.setText(distance.substring(0, Math.min(distance.length(), 5)) + " km");
+                            ridePrice = Double.valueOf(distance) * 0.5;
+
+                        }
                         if (child.getKey().equals("destination")){
                             rideLocation.setText(child.getValue().toString());
                         }
@@ -125,6 +155,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
 
     private void displayCustomerRelatedObjects() {
         mRatingBar.setVisibility(View.VISIBLE);
+        mPay.setVisibility(View.VISIBLE);
         mRatingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
@@ -133,6 +164,48 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                 mDriverRatingDb.child(rideId).setValue(rating);
             }
         });
+        mPay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                payPalPayment();
+            }
+        });
+    }
+
+    private int PAYPAL_REQUEST_CODE = 1;
+    private static PayPalConfiguration config = new PayPalConfiguration()
+            .environment(PayPalConfiguration.ENVIRONMENT_SANDBOX)
+            .clientId(PayPalConfig.PAYPAL_CLIENT_ID);
+
+    private void payPalPayment() {
+        PayPalPayment payment = new PayPalPayment(new BigDecimal(ridePrice), "USD", "Uber Ride",
+                PayPalPayment.PAYMENT_INTENT_SALE);
+
+        Intent intent = new Intent(this, PaymentActivity.class);
+
+        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+        intent.putExtra(PaymentActivity.EXTRA_PAYMENT, payment);
+
+        startActivityForResult(intent, PAYPAL_REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PAYPAL_REQUEST_CODE){
+            if(resultCode == Activity.RESULT_OK){
+
+
+            }else{
+                Toast.makeText(getApplicationContext(), "Payment unsuccessful", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopService(new Intent(this, PayPalService.class));
+        super.onDestroy();
     }
 
     private void getUserInformation(String otherUserDriverOrCustomer, String otherUserId) {
