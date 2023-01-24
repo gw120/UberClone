@@ -1,5 +1,4 @@
 package com.simcoder.uber;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -39,6 +38,10 @@ import com.paypal.android.sdk.payments.PayPalConfiguration;
 import com.paypal.android.sdk.payments.PayPalPayment;
 import com.paypal.android.sdk.payments.PayPalService;
 import com.paypal.android.sdk.payments.PaymentActivity;
+import com.paypal.android.sdk.payments.PaymentConfirmation;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,7 +49,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 public class HistorySingleActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private String rideId, currentUserId, customerId, driverId, userDriverOrCustomer;
     private TextView rideLocation;
@@ -55,16 +57,13 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     private TextView userName;
     private TextView userPhone;
     private ImageView userImage;
-
     private RatingBar mRatingBar;
-
     private Button mPay;
-
     private DatabaseReference historyRideInfoDb;
-
     private LatLng destinationLatLng, pickupLatLng;
     private String distance;
     private Double ridePrice;
+    private Boolean customerPaid = false;
 
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
@@ -72,13 +71,10 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history_single);
-
         Intent intent = new Intent(this, PayPalService.class);
         intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
         startService(intent);
-
         polylines = new ArrayList<>();
-
         rideId = getIntent().getExtras().getString("rideId");
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
@@ -88,17 +84,12 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         userName = (TextView) findViewById(R.id.userName);
         userPhone = (TextView) findViewById(R.id.userPhone);
         userImage = (ImageView) findViewById(R.id.userImage);
-
         mRatingBar = (RatingBar) findViewById(R.id.ratingBar);
-
         mPay = findViewById(R.id.pay);
-
         currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
         historyRideInfoDb = FirebaseDatabase.getInstance().getReference().child("history").child(rideId);
         getRideInformation();
     }
-
     private void getRideInformation() {
         historyRideInfoDb.addListenerForSingleValueEvent(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
@@ -128,11 +119,13 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                             mRatingBar.setRating(Integer.valueOf(child.getValue().toString()));
 
                         }
+                        if (child.getKey().equals("customerPaid")){
+                            customerPaid =true;
+                        }
                         if (child.getKey().equals("distance")){
                             distance = child.getValue().toString();
                             rideDistance.setText(distance.substring(0, Math.min(distance.length(), 5)) + " km");
                             ridePrice = Double.valueOf(distance) * 0.5;
-
                         }
                         if (child.getKey().equals("destination")){
                             rideLocation.setText(child.getValue().toString());
@@ -152,7 +145,6 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
             }
         });
     }
-
     private void displayCustomerRelatedObjects() {
         mRatingBar.setVisibility(View.VISIBLE);
         mPay.setVisibility(View.VISIBLE);
@@ -164,6 +156,11 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                 mDriverRatingDb.child(rideId).setValue(rating);
             }
         });
+        if(customerPaid){
+            mPay.setEnabled(false);
+        }else{
+            mPay.setEnabled(true);
+        }
         mPay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -171,42 +168,56 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
             }
         });
     }
-
     private int PAYPAL_REQUEST_CODE = 1;
     private static PayPalConfiguration config = new PayPalConfiguration()
             .environment(PayPalConfiguration.ENVIRONMENT_SANDBOX)
             .clientId(PayPalConfig.PAYPAL_CLIENT_ID);
-
     private void payPalPayment() {
         PayPalPayment payment = new PayPalPayment(new BigDecimal(ridePrice), "USD", "Uber Ride",
                 PayPalPayment.PAYMENT_INTENT_SALE);
-
         Intent intent = new Intent(this, PaymentActivity.class);
-
         intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
         intent.putExtra(PaymentActivity.EXTRA_PAYMENT, payment);
-
         startActivityForResult(intent, PAYPAL_REQUEST_CODE);
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PAYPAL_REQUEST_CODE){
             if(resultCode == Activity.RESULT_OK){
+                PaymentConfirmation confirm = data.getParcelableExtra(PaymentActivity.EXTRA_RESULT_CONFIRMATION);
+                if(confirm != null){
+                    try{
+                        JSONObject jsonObj = new JSONObject(confirm.toJSONObject().toString());
 
+                        String paymentResponse = jsonObj.getJSONObject("response").getString("state");
+
+                        if(paymentResponse.equals("approved")){
+                            Toast.makeText(getApplicationContext(), "Payment successful", Toast.LENGTH_LONG).show();
+                            historyRideInfoDb.child("customerPaid").setValue(true);
+                            mPay.setEnabled(false);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
 
             }else{
                 Toast.makeText(getApplicationContext(), "Payment unsuccessful", Toast.LENGTH_LONG).show();
             }
         }
     }
-
     @Override
     protected void onDestroy() {
         stopService(new Intent(this, PayPalService.class));
         super.onDestroy();
     }
+
+
+
+
+
+
 
     private void getUserInformation(String otherUserDriverOrCustomer, String otherUserId) {
         DatabaseReference mOtherUserDB = FirebaseDatabase.getInstance().getReference().child("Users").child(otherUserDriverOrCustomer).child(otherUserId);

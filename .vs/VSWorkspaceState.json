@@ -7,10 +7,10 @@
     "\\app\\src\\main\\java",
     "\\app\\src\\main\\java\\com",
     "\\app\\src\\main\\java\\com\\simcoder",
+    "\\app\\src\\main\\java\\com\\simcoder\\uber",
     "\\app\\src\\main\\res",
-    "\\gradle",
-    "\\gradle\\wrapper"
+    "\\app\\src\\main\\res\\layout"
   ],
-  "SelectedNode": "\\gradle\\wrapper\\gradle-wrapper.properties",
+  "SelectedNode": "\\app\\src\\main\\res\\layout\\activity_history_single.xml",
   "PreviewInSolutionExplorer": false
 }
