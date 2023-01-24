@@ -1,5 +1,4 @@
 package com.simcoder.uber;
-
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -51,21 +50,20 @@ import java.util.List;
 import java.util.Map;
 
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
-
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     LocationRequest mLocationRequest;
-    private Button mLogout, mSettings, mRideStatus;
-    private Switch mWorkingSwitch;
-    private int status = 0;
 
+    private Button mLogout, mSettings, mRideStatus, mHistory;
+
+    private Switch mWorkingSwitch;
+
+    private int status = 0;
     private String customerId = "", destination;
     private LatLng destinationLatLng, pickupLatLng;
     private float rideDistance;
-
     private Boolean isLoggingOut = false;
-
     private SupportMapFragment mapFragment;
     private LinearLayout mCustomerInfo;
     private ImageView mCustomerProfileImage;
@@ -102,6 +100,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mSettings = (Button) findViewById(R.id.settings);
         mLogout = (Button) findViewById(R.id.logout);
         mRideStatus = (Button) findViewById(R.id.rideStatus);
+        mHistory = (Button) findViewById(R.id.history);
         mRideStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -141,8 +140,19 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 return;
             }
         });
+
+        mHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DriverMapActivity.this, HistoryActivity.class);
+                intent.putExtra("customerOrDriver", "Drivers");
+                startActivity(intent);
+                return;
+            }
+        });
         getAssignedCustomer();
     }
+
     private void getAssignedCustomer(){
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("customerRideId");
@@ -267,7 +277,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         geoFire.removeLocation(customerId);
         customerId="";
         rideDistance = 0;
-
         if(pickupMarker != null){
             pickupMarker.remove();
         }
@@ -301,7 +310,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         map.put("distance", rideDistance);
         historyRef.child(requestId).updateChildren(map);
     }
-
     private Long getCurrentTimestamp() {
         Long timestamp = System.currentTimeMillis()/1000;
         return timestamp;
@@ -326,11 +334,9 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location) {
         if(getApplicationContext()!=null){
-
             if(!customerId.equals("")){
                 rideDistance += mLastLocation.distanceTo(location)/1000;
             }
-
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
