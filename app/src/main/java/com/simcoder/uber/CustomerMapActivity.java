@@ -21,7 +21,6 @@ import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.bumptech.glide.Glide;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -73,11 +72,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private LinearLayout mDriverInfo;
     private ImageView mDriverProfileImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
-
     private RadioGroup mRadioGroup;
-
     private RatingBar mRatingBar;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,9 +92,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mDriverName = (TextView) findViewById(R.id.driverName);
         mDriverPhone = (TextView) findViewById(R.id.driverPhone);
         mDriverCar = (TextView) findViewById(R.id.driverCar);
-
         mRatingBar = (RatingBar) findViewById(R.id.ratingBar);
-
         mRadioGroup = (RadioGroup) findViewById(R.id.radioGroup);
         mRadioGroup.check(R.id.UberX);
         mLogout = (Button) findViewById(R.id.logout);
@@ -306,16 +300,16 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0){
-                     if(dataSnapshot.child("name")!=null){
+                    if(dataSnapshot.child("name")!=null){
                         mDriverName.setText(dataSnapshot.child("name").getValue().toString());
                     }
-              
-                    if(map.get("phone")!=null){
-                        mDriverPhone.setText(map.get("phone").toString());
+                    if(dataSnapshot.child("phone")!=null){
+                        mDriverPhone.setText(dataSnapshot.child("phone").getValue().toString());
+                    }
                     if(dataSnapshot.child("car")!=null){
                         mDriverCar.setText(dataSnapshot.child("car").getValue().toString());
                     }
-                    if(dataSnapshot.child("profileImageUrl")!=null){
+                    if(dataSnapshot.child("profileImageUrl").getValue()!=null){
                         Glide.with(getApplication()).load(dataSnapshot.child("profileImageUrl").getValue().toString()).into(mDriverProfileImage);
                     }
 

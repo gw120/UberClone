@@ -48,17 +48,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     LocationRequest mLocationRequest;
-
     private Button mLogout, mSettings, mRideStatus, mHistory;
-
     private Switch mWorkingSwitch;
-
     private int status = 0;
     private String customerId = "", destination;
     private LatLng destinationLatLng, pickupLatLng;
@@ -140,7 +136,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 return;
             }
         });
-
         mHistory.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -152,7 +147,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         });
         getAssignedCustomer();
     }
-
     private void getAssignedCustomer(){
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("customerRideId");
@@ -202,15 +196,20 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             }
         });
     }
+
     private void getRouteToMarker(LatLng pickupLatLng) {
-        Routing routing = new Routing.Builder()
-                .travelMode(AbstractRouting.TravelMode.DRIVING)
-                .withListener(this)
-                .alternativeRoutes(false)
-                .waypoints(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), pickupLatLng)
-                .build();
-        routing.execute();
+       
+        if (pickupLatLng != null && mLastLocation != null){
+            Routing routing = new Routing.Builder()
+                    .travelMode(AbstractRouting.TravelMode.DRIVING)
+                    .withListener(this)
+                    .alternativeRoutes(false)
+                    .waypoints(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), pickupLatLng)
+                    .build();
+            routing.execute();
+        }
     }
+
     private void getAssignedCustomerDestination(){
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest");
@@ -334,10 +333,12 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location) {
         if(getApplicationContext()!=null){
-            if(!customerId.equals("")){
+
+            if(!customerId.equals("") && mLastLocation!=null && location != null){
                 rideDistance += mLastLocation.distanceTo(location)/1000;
             }
-            mLastLocation = location;
+
+
             LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
