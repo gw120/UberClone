@@ -1,5 +1,4 @@
 package com.simcoder.uber;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -54,25 +53,18 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 import java.io.BufferedInputStream;
 import java.sql.Driver;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, RoutingListener {
-
     private GoogleMap mMap;
     Location mLastLocation;
     LocationRequest mLocationRequest;
-
     private FusedLocationProviderClient mFusedLocationClient;
-
-
     private Button mLogout, mSettings, mRideStatus, mHistory;
-
     private Switch mWorkingSwitch;
     private int status = 0;
     private String customerId = "", destination;
@@ -89,14 +81,9 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         setContentView(R.layout.activity_driver_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         polylines = new ArrayList<>();
-
-          mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-
-
         mCustomerInfo = (LinearLayout) findViewById(R.id.customerInfo);
         mCustomerProfileImage = (ImageView) findViewById(R.id.customerProfileImage);
         mCustomerName = (TextView) findViewById(R.id.customerName);
@@ -333,46 +320,42 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-         mLocationRequest = new LocationRequest();
+        mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(1000);
         mLocationRequest.setFastestInterval(1000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
         if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-
             }else{
                 checkLocationPermission();
             }
         }
-   }
-
-   LocationCallback mLocationCallback = new LocationCallback(){
+    }
+    LocationCallback mLocationCallback = new LocationCallback(){
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for(Location location : locationResult.getLocations()){
                 if(getApplicationContext()!=null){
-
-                  if(!customerId.equals("") && mLastLocation!=null && location != null){
+                    if(!customerId.equals("") && mLastLocation!=null && location != null){
                         rideDistance += mLastLocation.distanceTo(location)/1000;
                     }
-                       LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+                    mLastLocation = location;
+
+
+                    LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                     mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-                          String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     DatabaseReference refAvailable = FirebaseDatabase.getInstance().getReference("driversAvailable");
                     DatabaseReference refWorking = FirebaseDatabase.getInstance().getReference("driversWorking");
                     GeoFire geoFireAvailable = new GeoFire(refAvailable);
                     GeoFire geoFireWorking = new GeoFire(refWorking);
-
-                       switch (customerId){
+                    switch (customerId){
                         case "":
                             geoFireWorking.removeLocation(userId);
                             geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                             break;
-
-                              default:
+                        default:
                             geoFireAvailable.removeLocation(userId);
                             geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                             break;
@@ -381,7 +364,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             }
         }
     };
-
     private void checkLocationPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -402,9 +384,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             }
         }
     }
-
     @Override
-
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch(requestCode){
@@ -421,27 +401,20 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             }
         }
     }
-
-        private void connectDriver(){
-
-          checkLocationPermission();
+    private void connectDriver(){
+        checkLocationPermission();
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         mMap.setMyLocationEnabled(true);
     }
-
-    private void disconnectDriver() 
-    
-    if(mFusedLocationClient != null){
+    private void disconnectDriver(){
+        if(mFusedLocationClient != null){
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         }
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
-
         GeoFire geoFire = new GeoFire(ref);
         geoFire.removeLocation(userId);
-    }{
-
-    
+    }
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     @Override

@@ -1,5 +1,4 @@
 package com.simcoder.uber;
-
 import android.*;
 import android.Manifest;
 import android.content.DialogInterface;
@@ -67,17 +66,12 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback {
-
     private GoogleMap mMap;
-      Location mLastLocation;
+    Location mLastLocation;
     LocationRequest mLocationRequest;
-
     private FusedLocationProviderClient mFusedLocationClient;
-
     private Button mLogout, mRequest, mSettings, mHistory;
-
     private LatLng pickupLocation;
     private Boolean requestBol = false;
     private Marker pickupMarker;
@@ -94,14 +88,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_costumer_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-
-         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
         destinationLatLng = new LatLng(0.0,0.0);
-
         mDriverInfo = (LinearLayout) findViewById(R.id.driverInfo);
         mDriverProfileImage = (ImageView) findViewById(R.id.driverProfileImage);
         mDriverName = (TextView) findViewById(R.id.driverName);
@@ -409,37 +399,30 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mLocationRequest.setInterval(1000);
         mLocationRequest.setFastestInterval(1000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-
-         if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-
             }else{
                 checkLocationPermission();
             }
         }
+        
 
-         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         mMap.setMyLocationEnabled(true);
     }
-
-      LocationCallback mLocationCallback = new LocationCallback(){
+    LocationCallback mLocationCallback = new LocationCallback(){
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for(Location location : locationResult.getLocations()){
                 if(getApplicationContext()!=null){
                     mLastLocation = location;
-
-
-                     LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
-
+                    LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                     mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
                 }
             }
         }
     };
-
     /*-------------------------------------------- onRequestPermissionsResult -----
     |  Function onRequestPermissionsResult
     |
@@ -450,9 +433,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     |                request has it's own unique request code.
     |
     *-------------------------------------------------------------------*/
-
-
-      private void checkLocationPermission() {
+    private void checkLocationPermission() {
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                 new android.app.AlertDialog.Builder(this)
@@ -472,9 +453,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             }
         }
     }
-
-
-     @Override
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch(requestCode){
@@ -491,4 +470,4 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             }
         }
     }
-}
+  }
