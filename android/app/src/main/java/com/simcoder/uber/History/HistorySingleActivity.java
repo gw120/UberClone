@@ -147,7 +147,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
 
 
                 mDate.setText(mRide.getDate());
-                mPrice.setText(mRide.getPriceString() + " €");
+                mPrice.setText(mRide.getPriceString() + " â‚¬");
                 mDestination.setText(mRide.getDestination().getName());
                 mPickup.setText(mRide.getPickup().getName());
                 mCar.setText(mRide.getCar());

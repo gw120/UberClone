@@ -1,4 +1,4 @@
-﻿//firebase functions:config:set stripe.sk=<YOUR STRIPE SECRET KEY>
+//firebase functions:config:set stripe.sk=<YOUR STRIPE SECRET KEY>
 //firebase functions:config:set stripe.pk=<YOUR STRIPE PUBLISHABLE KEY>
 
 'use strict';
@@ -27,7 +27,7 @@ exports.newRequest = functions.database.ref('/ride_info/{pushId}').onCreate(asyn
     // Grab the current value of what was written to the Realtime Database.
     const original = snapshot.val();
 
-    if (STRIPE_ENABLED) {
+    if(STRIPE_ENABLED){
         //check if user as a credit card enabled with stripe
         const customerPayment = await (await isCustomerPaymentReady(original.customerId)).success;
         console.log(customerPayment)
@@ -73,8 +73,8 @@ exports.requestListener = functions.database.ref('/ride_info/{pushId}').onUpdate
     }
     if (!snapshot.after.val().rating_calculated && snapshot.after.val().rating !== -1) {
         await admin.database().ref(`Users/Drivers/${id_driver}/rating/${id_ride}`).set(snapshot.after.val().rating);
-        await admin.database().ref(`/ride_info/${id_ride}`).update({ rating_calculated: true });
-
+        await admin.database().ref(`/ride_info/${id_ride}`).update({rating_calculated: true});
+        
     }
 
     if (!snapshot.after.val().ended) { return; }
@@ -119,7 +119,7 @@ exports.requestListener = functions.database.ref('/ride_info/{pushId}').onUpdate
 
     //update the driver db with the new payout ammount
     await admin.database().ref(`Users/Drivers/${id_driver}`).update({ payout_amount: payoutFinal });
-    await admin.database().ref(`/ride_info/${id_ride}`).update({ price, price_calculated: true });
+    await admin.database().ref(`/ride_info/${id_ride}`).update({price, price_calculated: true});
 
 });
 

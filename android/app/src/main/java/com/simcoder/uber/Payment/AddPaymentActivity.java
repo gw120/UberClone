@@ -168,7 +168,7 @@ public class AddPaymentActivity extends AppCompatActivity {
                         }
                     });
                 } else if (status == SetupIntent.Status.RequiresPaymentMethod) {
-                    // Setup failed – allow retrying using a different payment method
+                    // Setup failed â€“ allow retrying using a different payment method
                     runOnUiThread(() -> {
                         Activity activity = weakActivity.get();
                         if (activity != null) {
@@ -190,7 +190,7 @@ public class AddPaymentActivity extends AppCompatActivity {
 
             @Override
             public void onError(@NonNull Exception e) {
-                // Setup request failed – allow retrying using the same payment method
+                // Setup request failed â€“ allow retrying using the same payment method
                 runOnUiThread(() -> {
                     Activity activity = weakActivity.get();
                     if (activity != null) {
